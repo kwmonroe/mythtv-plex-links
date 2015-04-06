@@ -1,9 +1,9 @@
 #!/bin/bash
-# mythpreprocess.sh written by Justin Decker, copyright 2015. For licensing purposes,
-# use GPLv2
+# Original script written by Justin Decker, copyright 2015. For licensing
+# purposes, use GPLv2
 #
-# To use, create a "recording started" event that runs like so:
-#  /path/to/script/mythpreprocess.sh "%CHANID%" "%STARTTIMEUTC%"
+# To use, create a "user job" that runs like so:
+#  /path/to/script/mythtv-plex-links.sh "%CHANID%" "%STARTTIMEUTC%"
 
 # The following values adjust the script parameters:
 #
@@ -20,6 +20,7 @@ PMSSEC="6"
 # Set this to the location of the mythtv config.xml file. It's needed to
 # determine the mysql login. If you're running mythbuntu, you shouldn't need to
 # change this.
+# TODO: sanity check file and db values
 CONFIGXML="/home/mythtv/.mythtv/config.xml"
 
 # Leave everything below this line alone unless you know what you're doing.
@@ -29,12 +30,20 @@ CONFIGXML="/home/mythtv/.mythtv/config.xml"
 DBUSER="$(awk -F '[<>]' '/UserName/{print $3}' $CONFIGXML)"
 DBPASS="$(awk -F '[<>]' '/Password/{print $3}' $CONFIGXML)"
 
-# TODO: sanity check values
+# TODO: sanity check values (sql injection)
 CHANID=$1 && STARTTIME=$2
 
-# Populate recording information from sql database
-RECORDING=($(mysql mythconverg --user=$DBUSER --password=$DBPASS -se \
-  "SELECT title, season, episode, basename, storagegroup  FROM recorded WHERE chanid=\"$CHANID\" AND starttime=\"$STARTTIME\";"))
+# Populate recording information from sql database. Set field separator (IFS)
+# to tab and tell mysql to give us a tab-delimited result with no column names
+# (-Bs). Without this, IFS defaults to any whitespace, meaning words separated
+# by spaces in the result fields (such as the title) would be interpreted as
+# individual array elements. That would be bad since we expect the whole
+# title to be contained in array element 0 later.
+OLDIFS=$IFS
+IFS=$'\t'
+RECORDING=($(mysql mythconverg --user=$DBUSER --password=$DBPASS -Bse \
+  "SELECT title, season, episode, basename, storagegroup  FROM recorded WHERE chanid=\"$CHANID\" AND starttime=\"$STARTTIME\" LIMIT 1;"))
+IFS=$OLDIFS
 
 # Set vars from above query results, padding season and episode with 0 if needed
 # TODO: sanity check values
@@ -52,7 +61,7 @@ PLEXFILE="$TITLE - s${SEASON}e${EPISODE} - $STARTTIME.mpg"
 PLEXSHOWDIR="$PLEXLIBRARYDIR/$TITLE/Season ${SEASON}"
 PLEXFILEPATH="$PLEXSHOWDIR/$PLEXFILE"
 
-# create pretty name and path for file
+# create plex library subdir and symlink for this recording
 mkdir -p "$PLEXSHOWDIR"
 ln -s "$MYTHFILE" "$PLEXFILEPATH"
 
