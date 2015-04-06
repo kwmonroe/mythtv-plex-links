@@ -11,7 +11,7 @@
 # should reside.
 PLEXLIBRARYDIR="/mnt/esata/recordedtv"
 # Set this to the URL prefix of your Plex Media Server
-PMSURL="http://192.168.1.20:32400/"
+PMSURL="http://192.168.1.20:32400"
 # Set this to the section number of your recorded TV shows library. To find
 # this out, go to your plex media server and navigate to the desired library.
 # Look at the URL for that page, and at the end you should see
@@ -49,7 +49,7 @@ SGDIR=$(mysql mythconverg --user=$DBUSER --password=$DBPASS -se \
 
 MYTHFILE="$SGDIR/$FILENAME"
 PLEXFILE="$TITLE - s${SEASON}e${EPISODE} - $STARTTIME.mpg"
-PLEXSHOWDIR="$PLEXLIBRARYDIR/$TITLE"
+PLEXSHOWDIR="$PLEXLIBRARYDIR/$TITLE/Season ${SEASON}"
 PLEXFILEPATH="$PLEXSHOWDIR/$PLEXFILE"
 
 # create pretty name and path for file
@@ -61,4 +61,4 @@ find -L "$PLEXLIBRARYDIR" -type l -delete
 find "$PLEXLIBRARYDIR" -type d -empty -delete
 
 # Update Plex library
-curl "$PMSURL"library/sections/"$PMSSEC"/refresh
+curl "${PMSURL}/library/sections/${PMSSEC}/refresh"
