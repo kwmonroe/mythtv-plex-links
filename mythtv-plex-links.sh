@@ -53,6 +53,15 @@ EPISODE=`printf "%02d" ${RECORDING[2]}`
 FILENAME=${RECORDING[3]}
 STORAGEGROUP=${RECORDING[4]}
 
+# If season is '00', use 2 digit year
+if [ "$SEASON" == "00" ]; then
+  SEASON=`date +%y`
+fi
+# If episode is '00', use 3 digit day-of-year
+if [ "$EPISODE" == "00" ]; then
+  EPISODE=`date +%j`
+fi
+
 SGDIR=$(mysql mythconverg --user=$DBUSER --password=$DBPASS -se \
   "SELECT dirname FROM storagegroup WHERE groupname=\"$STORAGEGROUP\";")
 
