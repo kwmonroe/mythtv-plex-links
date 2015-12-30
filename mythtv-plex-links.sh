@@ -75,7 +75,7 @@ mkdir -p "$PLEXSHOWDIR"
 ln -s "$MYTHFILE" "$PLEXFILEPATH"
 
 # Prune all dead links and empty folders
-find -L "$PLEXLIBRARYDIR" -type l -delete
+find "$PLEXLIBRARYDIR" -xtype l -delete
 find "$PLEXLIBRARYDIR" -type d -empty -delete
 
 # Update Plex library
